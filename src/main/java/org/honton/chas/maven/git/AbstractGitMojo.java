@@ -5,7 +5,6 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.project.MavenProject;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
 import org.eclipse.jgit.lib.Repository;
@@ -16,11 +15,8 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
  */
 public abstract class AbstractGitMojo extends AbstractMojo {
 
-  @Parameter(defaultValue = "${project}", readonly = true)
-  private MavenProject mavenProject;
-
   @Parameter(defaultValue = "${settings}", readonly = true)
-  private Settings settings;
+  protected Settings settings;
 
   @Parameter(defaultValue = "${project.basedir}", readonly = true)
   private File baseDir;
@@ -43,9 +39,16 @@ public abstract class AbstractGitMojo extends AbstractMojo {
   @Parameter(property = "git.remote")
   protected String remote;
 
+  /**
+   * Use the contents of the ~/.ssh directory instead of ~/.m2/settings.xml to configure ssh
+   * connections.
+   */
+  @Parameter(defaultValue = "false", property = "git.use.ssh")
+  protected boolean useUseDotSsh;
+
   public void execute() throws MojoExecutionException, MojoFailureException {
     if (skip) {
-      getLog().info("skipping exists execution");
+      getLog().info("skipping git execution");
       return;
     }
     try {

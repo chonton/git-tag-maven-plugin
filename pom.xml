@@ -4,14 +4,12 @@
 
   <groupId>org.honton.chas</groupId>
   <artifactId>git-tag-maven-plugin</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.0.1</version>
   <packaging>maven-plugin</packaging>
 
-  <name>Artifact Exists Maven Plugin</name>
-
-  <description>Check if a http resource exists, particularly artifacts in a remote repository</description>
+  <description>Tag local git repository with a tagName and message.  Push the resulting annotated tag to remote.</description>
   <url>https://github.com/chonton/git-tag-maven-plugin</url>
-  <inceptionYear>2016</inceptionYear>
+  <inceptionYear>2017</inceptionYear>
 
   <licenses>
     <license>
@@ -68,9 +66,9 @@
   <dependencies>
 
     <dependency>
-      <groupId>org.apache.maven</groupId>
-      <artifactId>maven-core</artifactId>
-      <version>3.3.9</version>
+      <groupId>com.jcraft</groupId>
+      <artifactId>jsch</artifactId>
+      <version>0.1.54</version>
     </dependency>
 
     <dependency>
@@ -111,6 +109,12 @@
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-install-plugin</artifactId>
+        <version>2.4</version>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <version>2.4</version>
       </plugin>
@@ -120,7 +124,7 @@
         <artifactId>maven-plugin-plugin</artifactId>
         <version>3.4</version>
         <configuration>
-          <goalPrefix>exists</goalPrefix>
+          <goalPrefix>git-tag</goalPrefix>
           <extractors>
             <extractor>java-annotations</extractor>
           </extractors>
@@ -131,6 +135,12 @@
             <phase>process-classes</phase>
           </execution>
         </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-site-plugin</artifactId>
+        <version>3.3</version>
       </plugin>
 
     </plugins>
