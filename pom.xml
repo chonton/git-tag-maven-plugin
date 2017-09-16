@@ -7,7 +7,9 @@
   <version>0.0.1</version>
   <packaging>maven-plugin</packaging>
 
-  <description>Tag local git repository with a tagName and message.  Push the resulting annotated tag to remote.</description>
+  <name>Git Tag Maven Plugin</name>
+
+  <description>Check if a http resource exists, particularly artifacts in a remote repository</description>
   <url>https://github.com/chonton/git-tag-maven-plugin</url>
   <inceptionYear>2017</inceptionYear>
 
