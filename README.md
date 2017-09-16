@@ -6,21 +6,22 @@ then pushed to a remote repository.  The push can optionally be disabled.
 The credentials used to authenticate to the remote repository are extracted from the
 [servers](https://maven.apache.org/settings.html#Servers) section of the maven settings.xml.  The
 particular server credentials are selected by matching the host portion of the git url with a server id.
-e.g. **git@github.com:chonton/git-tag-maven-plugin.git** or **https://github.com/chonton/git-tag-maven-plugin.git**,
+e.g. **git&#64;github.com:chonton/git-tag-maven-plugin.git** or **https&#58;//github.com/chonton/git-tag-maven-plugin.git**,
 will match a server section with the id **github.com**.  The credentials type must correlate with the
-provided credentials; for an ssh git url, the server should include a <privateKey> and <passphrase>.
-For an https git url, the server should include a <username> and <password>.
+provided credentials; for an ssh git url, the server should include a &lt;privateKey> and &lt;passphrase>.
+For an https git url, the server should include a &lt;username> and &lt;password>.
 
 If an ssh git url is used and you want to use standard ssh configuration from the ~/.ssh directory
-instead of using ~/.m2/settings.xml, set the useDotSsh to true. 
+instead of using ~/.m2/settings.xml, set the useDotSsh parameter to true. 
 
 An alternate branch can be specified. An alternate remote repository can be specified.
 
-Mojo details at [plugin info](https://chonton.github.io/git-tag-maven-plugin/0.0.1/plugin-info.html)
+Mojo details at [plugin info](https://chonton.github.io/git-tag-maven-plugin/0.0.1/plugin-info.html).
 
-The [tag](https://chonton.github.io/git-tag-maven-plugin/0.0.1/tag.html) goal is by default
-attached to the *deploy* phase.  This will occur after any packaging type's deploy plugin goal.  The
-supported parameters are:
+The [tag](https://chonton.github.io/git-tag-maven-plugin/0.0.1/tag-mojo.html) goal is by default
+attached to the *deploy* phase.  This will occur after any packaging type's deploy plugin goal.
+
+The supported parameters are:
 
 | Parameter | Required | Property | Default | Description |
 |-----------|----------|----------|---------|-------------|
@@ -32,7 +33,7 @@ supported parameters are:
 |useDotSsh  | No       |git.use.ssh|false   |Use the contents of ~/.ssh instead of ~/.m2/settings.xml to configure ssh connections|
 |skipPush   | No       |git.skipPush|false  |Skip pushing the tag to remote|
 
-Typical attached phase use:
+### Typical attached phase use:
 
 ```xml
   <build>
@@ -58,7 +59,7 @@ Typical attached phase use:
   </build>
 ```
 
-Typical command line use:
+### Typical command line use:
 ```sh
 mvn org.honton.chas:git-tag-maven-plugin:tag -Dgit.tagName=0.0.1
 ```
