@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Validator.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Test Pojos Maven Plugin</a> &gt; <a href="index.source.html" class="el_package">org.honton.chas.dogstatd.model</a> &gt; <span class="el_source">Validator.java</span></div><h1>Validator.java</h1><pre class="source lang-java linenums">package org.honton.chas.dogstatd.model;
+
+import java.util.regex.Pattern;
+
+/**
+ * Validation routines
+ */
+public final class Validator {
+
+  // Metric names must start with a letter, and after that may contain ascii alphanumerics,
+  // underscore and periods.
+<span class="fc" id="L12">  private static final Pattern VALID_NAME = Pattern.compile(&quot;^[A-Za-z][0-9A-Za-z_\\.]*$&quot;);</span>
+
+  // Tags must start with a lowercase letter, and after that may contain lowercase alphanumerics,
+  // underscores, minuses, colons, periods and slashes.
+  // Tags can be up to 200 characters long.
+<span class="fc" id="L17">  private static final Pattern VALID_TAG = Pattern.compile(&quot;^[a-z][0-9a-z_\\-:\\./]{0,199}$&quot;);</span>
+
+  // No pipes
+<span class="fc" id="L20">  private static final Pattern NO_PIPES = Pattern.compile(&quot;^[^\\|\\p{Cntrl}]+$&quot;);</span>
+
+<span class="nc" id="L22">  private Validator() {}</span>
+
+  /**
+   * Validate a metric name.
+   * 
+   * @param name The name to validate.
+   * @return true, if the name start with an ASCII letter, and contains only ASCII alphanumerics,
+   *         underscores, and periods.
+   */
+  public static boolean nameIsValid(String name) {
+<span class="fc" id="L32">    return VALID_NAME.matcher(name).matches();</span>
+  }
+
+  /**
+   * Validate a String tag.
+   * 
+   * @param tag The String tag to validate.
+   * @return true, if the tag is 1 to 200 characters long and starts with a lowercase ASCII letter,
+   *         and contains only lowercase ASCII alphanumerics, underscores, minuses, colons, periods
+   *         and slashes.
+   */
+  public static boolean tagIsValid(String tag) {
+<span class="fc" id="L44">    return VALID_TAG.matcher(tag).matches();</span>
+  }
+
+  /**
+   * Validate a String value.
+   * 
+   * @param value The value to validate.
+   * @return true, if value is not empty and does not have any pipe ('|') or control characters
+   */
+  public static boolean fieldIsValid(String value) {
+<span class="fc" id="L54">    return NO_PIPES.matcher(value).matches();</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

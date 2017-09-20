@@ -1,0 +1,14 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+Test Pojos Maven Plugin,org.honton.chas.dogstatd.model,Validator,3,25,0,0,1,6,1,4,1,4
+Test Pojos Maven Plugin,org.honton.chas.dogstatd.model,Counter,0,7,0,0,0,2,0,1,0,1
+Test Pojos Maven Plugin,org.honton.chas.dogstatd.model,Event.Priority,9,29,0,0,0,2,2,2,2,2
+Test Pojos Maven Plugin,org.honton.chas.dogstatd.model,ServiceCheck,38,127,1,15,1,25,2,14,1,7
+Test Pojos Maven Plugin,org.honton.chas.dogstatd.model,Event.Alert,9,49,0,0,0,2,2,2,2,2
+Test Pojos Maven Plugin,org.honton.chas.dogstatd.model,Sender,35,126,3,9,11,38,6,11,4,7
+Test Pojos Maven Plugin,org.honton.chas.dogstatd.model,Histogram,0,7,0,0,0,2,0,1,0,1
+Test Pojos Maven Plugin,org.honton.chas.dogstatd.model,Gauge,0,7,0,0,0,2,0,1,0,1
+Test Pojos Maven Plugin,org.honton.chas.dogstatd.model,Metric,28,74,0,6,1,15,1,7,1,4
+Test Pojos Maven Plugin,org.honton.chas.dogstatd.model,Tags,3,57,0,8,1,11,1,6,1,2
+Test Pojos Maven Plugin,org.honton.chas.dogstatd.model,Event,53,208,3,27,1,38,4,22,1,10
+Test Pojos Maven Plugin,org.honton.chas.dogstatd.model,ServiceCheck.Status,9,49,0,0,0,2,2,2,2,2
+Test Pojos Maven Plugin,org.honton.chas.dogstatd.model,Set,0,7,0,0,0,2,0,1,0,1

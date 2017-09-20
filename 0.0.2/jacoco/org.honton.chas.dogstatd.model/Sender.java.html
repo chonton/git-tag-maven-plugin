@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Sender.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Test Pojos Maven Plugin</a> &gt; <a href="index.source.html" class="el_package">org.honton.chas.dogstatd.model</a> &gt; <span class="el_source">Sender.java</span></div><h1>Sender.java</h1><pre class="source lang-java linenums">package org.honton.chas.dogstatd.model;
+
+import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.Inet6Address;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.ProtocolFamily;
+import java.net.StandardProtocolFamily;
+import java.net.StandardSocketOptions;
+import java.nio.BufferOverflowException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.channels.DatagramChannel;
+import java.nio.channels.UnsupportedAddressTypeException;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
+
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * Send formatted UDP messages to a DogStatD. 
+ * Messages are added to a queue and sent in a background thread.
+ */
+<span class="fc" id="L26">@Slf4j</span>
+public class Sender {
+
+  private static final int MTU = 1440;
+
+<span class="fc" id="L31">  private static final long ONE_MINUTE = TimeUnit.MINUTES.toMillis(1);</span>
+
+  private final DatagramChannel clientChannel;
+  private volatile long throttleEnd;
+  private long throttleInterval;
+
+  /**
+   * Create a sender which sends to a DogStatD on port 8125 at the specified 
+   * address.
+   *
+   * @param address The address to send to.
+   */
+  public Sender(String address) {
+<span class="nc" id="L44">    this(getAddress(address));</span>
+<span class="nc" id="L45">  }</span>
+
+<span class="nc" id="L47">  @SneakyThrows</span>
+  private static InetAddress getAddress(String address) {
+<span class="nc" id="L49">    return InetAddress.getByName(address);</span>
+  }
+
+  public Sender() {
+<span class="nc" id="L53">    this(InetAddress.getLoopbackAddress());</span>
+<span class="nc" id="L54">  }</span>
+
+  /**
+   * Create a sender which sends to a DogStatD on port 8125 at the specified 
+   * address.
+   *
+   * @param address The address to send to.
+   */
+  public Sender(InetAddress address) {
+<span class="nc" id="L63">    this(new InetSocketAddress(address, 8125));</span>
+<span class="nc" id="L64">  }</span>
+
+  /**
+   * Create a sender which sends to a DogStatD on the specified port and address.
+   *
+   * @param socket The address and port to send to.
+   */
+  public Sender(InetSocketAddress socket) {
+<span class="fc" id="L72">    this(socket, ONE_MINUTE);</span>
+<span class="fc" id="L73">  }</span>
+
+  /**
+   * Create a sender which sends to a DogStatD on the specified port and address.
+   *
+   * @param socket The address and port to send to.
+   */
+<span class="pc" id="L80">  @SneakyThrows</span>
+<span class="fc" id="L81">  public Sender(InetSocketAddress socket, long throttleInterval) {</span>
+<span class="fc" id="L82">    clientChannel = DatagramChannel.open(getProtocol(socket.getAddress()));</span>
+<span class="fc" id="L83">    clientChannel.configureBlocking(false);</span>
+<span class="fc" id="L84">    clientChannel.setOption(StandardSocketOptions.SO_SNDBUF, MTU);</span>
+<span class="fc" id="L85">    clientChannel.connect(socket);</span>
+<span class="fc" id="L86">    this.throttleInterval = throttleInterval;</span>
+<span class="fc" id="L87">  }</span>
+
+  private ProtocolFamily getProtocol(InetAddress host) {
+<span class="pc bpc" id="L90" title="1 of 2 branches missed.">    if (host instanceof Inet4Address) {</span>
+<span class="fc" id="L91">      return StandardProtocolFamily.INET;</span>
+    }
+<span class="nc bnc" id="L93" title="All 2 branches missed.">    if (host instanceof Inet6Address) {</span>
+<span class="nc" id="L94">      return StandardProtocolFamily.INET6;</span>
+    }
+<span class="nc" id="L96">    throw new UnsupportedAddressTypeException();</span>
+  }
+
+  /**
+   * Send message to collector daemon.
+   *
+   * @param message The message to send.
+   * @return true, if message is valid and successfully queued for delivery
+   */
+  public boolean send(Message message) {
+<span class="fc bfc" id="L106" title="All 2 branches covered.">    if (throttleEnd != 0) {</span>
+<span class="fc bfc" id="L107" title="All 2 branches covered.">      if (System.currentTimeMillis() &lt; throttleEnd) {</span>
+<span class="fc" id="L108">        return false;</span>
+      }
+<span class="fc" id="L110">      throttleEnd = 0;</span>
+    }
+
+<span class="fc bfc" id="L113" title="All 2 branches covered.">    if (!message.validate()) {</span>
+<span class="fc" id="L114">      return false;</span>
+    }
+
+<span class="fc" id="L117">    CharBuffer chars = CharBuffer.allocate(1400);</span>
+<span class="fc" id="L118">    chars.clear();</span>
+    try {
+<span class="fc" id="L120">      message.format(chars);</span>
+    }
+<span class="fc" id="L122">    catch(BufferOverflowException boe) {</span>
+<span class="fc" id="L123">      log.info(&quot;too large of message {}&quot;, message);</span>
+<span class="fc" id="L124">      return false;</span>
+<span class="fc" id="L125">    }</span>
+
+<span class="fc" id="L127">    chars.flip();</span>
+<span class="fc" id="L128">    ByteBuffer bytes = StandardCharsets.UTF_8.encode(chars);</span>
+
+    try {
+<span class="fc" id="L131">      clientChannel.write(bytes);</span>
+<span class="fc" id="L132">      return true;</span>
+<span class="fc" id="L133">    } catch (IOException pue) {</span>
+<span class="fc" id="L134">      throttleEnd = System.currentTimeMillis() + throttleInterval;</span>
+    }
+<span class="fc" id="L136">    log.warn(&quot;failed to send message {}&quot;, message);</span>
+<span class="fc" id="L137">    return false;</span>
+  }
+
+  void shutdown() throws IOException {
+<span class="fc" id="L141">    clientChannel.close();</span>
+<span class="fc" id="L142">  }</span>
+
+  boolean isThrottled() {
+<span class="fc bfc" id="L145" title="All 2 branches covered.">    return throttleEnd != 0;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

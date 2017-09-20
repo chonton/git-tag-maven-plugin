@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ServiceCheck.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Test Pojos Maven Plugin</a> &gt; <a href="index.source.html" class="el_package">org.honton.chas.dogstatd.model</a> &gt; <span class="el_source">ServiceCheck.java</span></div><h1>ServiceCheck.java</h1><pre class="source lang-java linenums">package org.honton.chas.dogstatd.model;
+
+import java.nio.CharBuffer;
+
+import lombok.NonNull;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * A ServiceCheck is the current status of a service.
+ */
+@Accessors(chain = true)
+<span class="fc" id="L15">@Slf4j</span>
+<span class="nc" id="L16">@ToString</span>
+<span class="fc" id="L17">@Setter</span>
+public class ServiceCheck implements Message {
+<span class="pc" id="L19">  public enum Status {</span>
+<span class="fc" id="L20">    OK, WARNING, CRITICAL, UNKNOWN</span>
+  }
+
+  private final String name;
+  private final Status value;
+  private final String[] tags;
+  private Long timestamp;
+  private String host;
+  private String message;
+
+  /**
+   * Create an ServiceCheck value to be sent to DogStatD.
+   * 
+   * @param name The name of the service.
+   * @param value The status.
+   * @param tags Any additional data about the status.
+   */
+<span class="fc bfc" id="L37" title="All 4 branches covered.">  ServiceCheck(@NonNull String name, @NonNull Status value, String... tags) {</span>
+<span class="fc" id="L38">    this.name = name;</span>
+<span class="fc" id="L39">    this.value = value;</span>
+<span class="fc" id="L40">    this.tags = tags;</span>
+<span class="fc" id="L41">  }</span>
+
+  @Override
+  public boolean validate() {
+<span class="fc bfc" id="L45" title="All 2 branches covered.">    if (!Validator.nameIsValid(name)) {</span>
+<span class="fc" id="L46">      log.warn(&quot;invalid name '{}'&quot;, name);</span>
+<span class="fc" id="L47">      return false;</span>
+    }
+<span class="pc bpc" id="L49" title="1 of 4 branches missed.">    if (host != null &amp;&amp; !Validator.fieldIsValid(host)) {</span>
+<span class="fc" id="L50">      log.warn(&quot;host contains control characters or is empty&quot;);</span>
+<span class="fc" id="L51">      return false;</span>
+    }
+<span class="fc" id="L53">    return Tags.validate(log, tags);</span>
+  }
+
+  // _sc|name|status|metadata
+  public void format(CharBuffer chars) {
+<span class="fc" id="L58">    chars.append(&quot;_sc|&quot;).append(name)</span>
+<span class="fc" id="L59">        .append('|').append(Integer.toString(value.ordinal()));</span>
+
+<span class="fc bfc" id="L61" title="All 2 branches covered.">    if (timestamp != null) {</span>
+<span class="fc" id="L62">      chars.append(&quot;|d:&quot;).append(timestamp.toString());</span>
+    }
+
+<span class="fc bfc" id="L65" title="All 2 branches covered.">    if (host != null) {</span>
+<span class="fc" id="L66">      chars.append(&quot;|h:&quot;).append(host);</span>
+    }
+
+<span class="fc" id="L69">    Tags.format(chars, tags);</span>
+
+<span class="fc bfc" id="L71" title="All 2 branches covered.">    if (message != null) {</span>
+<span class="fc" id="L72">      chars.append(&quot;|m:&quot;).append(message);</span>
+    }
+<span class="fc" id="L74">    chars.append('\n');</span>
+<span class="fc" id="L75">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>
