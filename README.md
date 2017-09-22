@@ -6,8 +6,8 @@ then pushed to a remote repository.  The push can optionally be disabled.
 The credentials used to authenticate to the remote repository are extracted from the
 [servers](https://maven.apache.org/settings.html#Servers) section of the maven settings.xml.  The
 particular server credentials are selected by matching the host portion of the git url with a server id.
-e.g. **git&#64;github.com:chonton/git-tag-maven-plugin.git** or **https&#58;//github.com/chonton/git-tag-maven-plugin.git**,
-will match a server section with the id **github.com**.  The credentials type must correlate with the
+e.g. ```git@github.com:chonton/git-tag-maven-plugin.git``` or ```https://github.com/chonton/git-tag-maven-plugin.git```,
+will match a server section with the id ```github.com```.  The credentials type must correlate with the
 provided credentials; for an ssh git url, the server should include a &lt;privateKey> and &lt;passphrase>.
 For an https git url, the server should include a &lt;username> and &lt;password>.
 
@@ -16,9 +16,9 @@ instead of using ~/.m2/settings.xml, set the useDotSsh parameter to true.
 
 An alternate branch can be specified. An alternate remote repository can be specified.
 
-Mojo details at [plugin info](https://chonton.github.io/git-tag-maven-plugin/0.0.1/plugin-info.html).
+Mojo details at [plugin info](https://chonton.github.io/git-tag-maven-plugin/0.0.2/plugin-info.html).
 
-The [tag](https://chonton.github.io/git-tag-maven-plugin/0.0.1/tag-mojo.html) goal is by default
+The [tag](https://chonton.github.io/git-tag-maven-plugin/0.0.2/tag-mojo.html) goal is by default
 attached to the *deploy* phase.  This will occur after any packaging type's deploy plugin goal.
 
 The supported parameters are:
@@ -42,7 +42,7 @@ The supported parameters are:
       <plugin>
         <groupId>org.honton.chas</groupId>
         <artifactId>git-tag-maven-plugin</artifactId>
-        <version>0.0.1</version>
+        <version>0.0.2</version>
         <executions>
           <execution>
             <goals>

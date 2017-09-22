@@ -4,12 +4,12 @@
 
   <groupId>org.honton.chas</groupId>
   <artifactId>git-tag-maven-plugin</artifactId>
-  <version>0.0.1</version>
+  <version>0.0.2</version>
   <packaging>maven-plugin</packaging>
 
   <name>Git Tag Maven Plugin</name>
 
-  <description>Check if a http resource exists, particularly artifacts in a remote repository</description>
+  <description>Tag the current git working tree</description>
   <url>https://github.com/chonton/git-tag-maven-plugin</url>
   <inceptionYear>2017</inceptionYear>
 
@@ -57,7 +57,6 @@
   <properties>
     <maven.compiler.source>1.7</maven.compiler.source>
     <maven.compiler.target>1.7</maven.compiler.target>
-
     <!-- use org.sonatype.plugins:nexus-staging-maven-plugin instead of org.apache.maven.plugins:maven-deploy-plugin -->
     <maven.deploy.skip>true</maven.deploy.skip>
     <!-- use com.github.github:site-maven-plugin instead of org.apache.maven.plugins:maven-site-plugin -->
@@ -68,9 +67,21 @@
   <dependencies>
 
     <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>18.0</version>
+    </dependency>
+
+    <dependency>
       <groupId>com.jcraft</groupId>
       <artifactId>jsch</artifactId>
       <version>0.1.54</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-core</artifactId>
+      <version>3.3.9</version>
     </dependency>
 
     <dependency>
@@ -96,6 +107,13 @@
       <groupId>org.eclipse.jgit</groupId>
       <artifactId>org.eclipse.jgit</artifactId>
       <version>4.8.0.201706111038-r</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>1.16.18</version>
+      <scope>provided</scope>
     </dependency>
 
   </dependencies>
@@ -197,9 +215,9 @@
             <configuration>
               <message>Site documentation</message>
               <path>${project.version}</path>
-              <merge>false</merge>
+              <merge>true</merge>
               <server>github</server>
-              <repositoryName>git-tag-maven-plugin</repositoryName>
+              <repositoryName>${project.artifactId}</repositoryName>
               <repositoryOwner>chonton</repositoryOwner>
             </configuration>
             <executions>

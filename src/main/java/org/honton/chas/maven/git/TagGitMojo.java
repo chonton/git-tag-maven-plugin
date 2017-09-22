@@ -1,38 +1,57 @@
 package org.honton.chas.maven.git;
 
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
-import java.io.IOException;
+import java.io.File;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.settings.Server;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.PushCommand;
-import org.eclipse.jgit.api.TagCommand;
-import org.eclipse.jgit.api.TransportConfigCallback;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.errors.UnsupportedCredentialItem;
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.revwalk.RevObject;
-import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.transport.CredentialItem;
-import org.eclipse.jgit.transport.CredentialsProvider;
-import org.eclipse.jgit.transport.JschConfigSessionFactory;
-import org.eclipse.jgit.transport.OpenSshConfig;
-import org.eclipse.jgit.transport.SshTransport;
-import org.eclipse.jgit.transport.Transport;
-import org.eclipse.jgit.transport.URIish;
-import org.eclipse.jgit.util.FS;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.settings.Settings;
 
 /**
  * Tag current code with a tagName and message.  Optionally use a branch other than HEAD.
  * Unless skipPush is set, the annotated tag is pushed to the origin.
  */
 @Mojo(name = "tag", defaultPhase = LifecyclePhase.DEPLOY)
-public class TagGitMojo extends AbstractGitMojo {
+public class TagGitMojo extends AbstractMojo {
+
+  private static final AtomicInteger READY_PROJECTS_COUNTER = new AtomicInteger();
+  private static final ConcurrentHashMap<String,TagGit> GIT_REPOSITORIES =  new ConcurrentHashMap();
+
+  @Parameter( defaultValue = "${reactorProjects}", required = true, readonly = true )
+  private List<MavenProject> reactorProjects;
+
+  @Parameter( defaultValue = "${project}", readonly = true, required = true )
+  private MavenProject project;
+
+  @Parameter(defaultValue = "${settings}", readonly = true)
+  protected Settings settings;
+
+  @Parameter(defaultValue = "${project.basedir}", readonly = true)
+  private File baseDir;
+
+  /**
+   * Skip executing this plugin
+   */
+  @Parameter(defaultValue = "false", property = "git.skip")
+  private boolean skip;
+
+  /**
+   * Git branch (defaults to HEAD branch)
+   */
+  @Parameter(property = "git.branch")
+  private String branch;
+
+  /**
+   * Git Remote URI
+   */
+  @Parameter(property = "git.remote")
+  private String remote;
 
   /**
    * Message for the tag
@@ -52,161 +71,44 @@ public class TagGitMojo extends AbstractGitMojo {
   @Parameter(defaultValue = "false", property = "git.skipPush")
   private boolean skipPush;
 
-  @Override
-  protected void doExecute(Repository repository) throws Exception {
-    try (Git git = new Git(repository)) {
-      tag(git);
-      if (!skipPush) {
-        push(git);
+  /**
+   * Use the contents of the ~/.ssh directory instead of ~/.m2/settings.xml to configure ssh
+   * connections.
+   */
+  @Parameter(defaultValue = "false", property = "git.use.ssh")
+  protected boolean useUseDotSsh;
+
+  public void execute() throws MojoExecutionException, MojoFailureException {
+    if (skip) {
+      getLog().info("skipping git execution");
+      return;
+    }
+
+    try {
+      addGitWorkspace(baseDir);
+      if ( READY_PROJECTS_COUNTER.incrementAndGet() == reactorProjects.size() ) {
+        iterateGitWorkspaces();
       }
+    } catch (MojoExecutionException mee) {
+      throw mee;
+    } catch (MojoFailureException mfe) {
+      throw mfe;
+    } catch (Exception e) {
+      throw new MojoExecutionException(e.getMessage(), e);
     }
   }
 
-  private void tag(Git git) throws GitAPIException, IOException {
-    TagCommand tagCommand = git.tag().setAnnotated(true);
-    if (branch != null) {
-      tagCommand.setObjectId(getObjectId(git));
-    }
-    tagCommand.setName(tagName).setMessage(message == null ? "release " + tagName : message).call();
-  }
-
-  private RevObject getObjectId(Git git) throws IOException {
-    Repository repository = git.getRepository();
-    ObjectId objectId = repository.findRef(branch).getObjectId();
-    return new RevWalk(repository).parseAny(objectId);
-  }
-
-  private void push(Git git) throws GitAPIException {
-    PushCommand pushCommand = git.push().setPushTags();
-    if (remote != null) {
-      pushCommand.setRemote(remote);
-    }
-    if (!useUseDotSsh) {
-      pushCommand.setTransportConfigCallback(new MavenTransportConfigCallback());
-      pushCommand.setCredentialsProvider(new MavenSshCredentialsProvider()).call();
-    } else {
-      pushCommand.setCredentialsProvider(new MavenCredentialsProvider()).call();
+  private void addGitWorkspace(File baseDir) throws Exception {
+   TagGit value = new TagGit(branch, remote, tagName, message, skipPush, useUseDotSsh);
+    TagGit prior = GIT_REPOSITORIES.putIfAbsent(value.createKey(baseDir), value);
+    if(prior != null && !prior.equals(value)) {
+      throw new MojoExecutionException("mismatch in branch or remote");
     }
   }
 
-  class MavenTransportConfigCallback implements TransportConfigCallback {
-    @Override
-    public void configure(Transport transport) {
-      if (transport instanceof SshTransport) {
-        ((SshTransport) transport).setSshSessionFactory(new MavenSshSessionFactory());
-      }
+  private void iterateGitWorkspaces() throws Exception {
+    for(TagGit entry : GIT_REPOSITORIES.values()) {
+      entry.tagAndPush(getLog(), settings.getServers());
     }
   }
-
-  class MavenSshSessionFactory extends JschConfigSessionFactory {
-    @Override
-    protected Session createSession(OpenSshConfig.Host hc, String user, String host, int port,
-      FS fs) throws JSchException {
-      JSch jSch = new JSch();
-      for (Server server : settings.getServers()) {
-        String privateKey = server.getPrivateKey();
-        if (privateKey != null) {
-          getLog().debug(server.getId() + " is potential ssh connection");
-          jSch.addIdentity(privateKey, server.getPassphrase());
-        }
-      }
-      return jSch.getSession(user, host, port);
-    }
-
-    @Override
-    protected void configure(OpenSshConfig.Host hc, Session session) {
-    }
-  }
-
-  class MavenCredentialsProvider extends CredentialsProvider {
-
-    @Override
-    public final boolean isInteractive() {
-      return false;
-    }
-
-    @Override
-    public final boolean supports(CredentialItem... credentialItems) {
-      for (CredentialItem credentialItem : credentialItems) {
-        if (!isSupported(credentialItem)) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    protected boolean isSupported(CredentialItem credentialItem) {
-      return credentialItem instanceof CredentialItem.Username
-        || credentialItem instanceof CredentialItem.Password;
-    }
-
-    @Override
-    public final boolean get(URIish urIish, CredentialItem... credentialItems) {
-      String id = getId(urIish);
-      getLog().debug(urIish.toString() + " -> " + id);
-
-      Server server = getServer(id);
-      if (server == null) {
-        getLog().error("No server matches " + id);
-        return false;
-      }
-      for (CredentialItem credentialItem : credentialItems) {
-        String failure = checkItem(server, credentialItem);
-        if (failure != null) {
-          throw new UnsupportedCredentialItem(urIish, failure);
-        }
-      }
-      return true;
-    }
-
-    protected String checkItem(Server server, CredentialItem credentialItem) {
-      if (credentialItem instanceof CredentialItem.Username) {
-        ((CredentialItem.Username) credentialItem).setValue(server.getUsername());
-        return null;
-      }
-      if (credentialItem instanceof CredentialItem.Password) {
-        ((CredentialItem.Password) credentialItem).setValue(server.getPassword().toCharArray());
-        return null;
-      }
-      return "Cannot support credential type " + credentialItem.getClass().getCanonicalName();
-    }
-
-    protected String getId(URIish urIish) {
-      int port = urIish.getPort();
-      if (-1 != port) {
-        return urIish.getHost() + ':' + port;
-      } else {
-        return urIish.getHost();
-      }
-    }
-  }
-
-  class MavenSshCredentialsProvider extends MavenCredentialsProvider {
-
-    protected boolean isSupported(CredentialItem credentialItem) {
-      return credentialItem instanceof CredentialItem.YesNoType
-        || super.isSupported(credentialItem);
-    }
-
-    protected String checkItem(Server server, CredentialItem credentialItem) {
-      if (credentialItem instanceof CredentialItem.YesNoType) {
-        getLog().debug(credentialItem.getPromptText());
-        if (credentialItem.getPromptText().contains("RSA key fingerprint")) {
-          ((CredentialItem.YesNoType) credentialItem).setValue(true);
-          return null;
-        }
-        return "Cannot support credential with prompt " + credentialItem.getPromptText();
-      }
-      return super.checkItem(server, credentialItem);
-    }
-
-    protected String getId(URIish urIish) {
-      int port = urIish.getPort();
-      if (port == 22) {
-        return urIish.getHost();
-      }
-      return urIish.getHost() + ':' + port;
-    }
-  }
-
 }
