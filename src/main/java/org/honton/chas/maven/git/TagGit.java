@@ -14,11 +14,15 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.TagCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.PatchApplyException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevObject;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.transport.PushResult;
+import org.eclipse.jgit.transport.RemoteRefUpdate;
+import org.eclipse.jgit.transport.RemoteRefUpdate.Status;
 
 @RequiredArgsConstructor
 @EqualsAndHashCode(exclude = {"gitDir", "log", "servers"})
@@ -85,9 +89,19 @@ class TagGit {
     if (remote != null) {
       pushCommand.setRemote(remote);
     }
-    pushCommand.setCredentialsProvider(new SettingsXmlCredentialsProvider(log, serverAccess)).call();
     if (!useUseDotSsh) {
       pushCommand.setTransportConfigCallback(new SettingsXmlConfigCallback(log, servers));
+    }
+    else {
+      pushCommand.setCredentialsProvider(new SettingsXmlCredentialsProvider(log, serverAccess));
+    }
+    for(PushResult resp : pushCommand.call()) {
+      for(RemoteRefUpdate rru : resp.getRemoteUpdates()) {
+        Status status = rru.getStatus();
+        if(status != Status.OK && status != Status.UP_TO_DATE) {
+          throw new PatchApplyException("remote: " + rru.getRemoteName() + ", status: " + status);
+        }
+      }
     }
   }
 }

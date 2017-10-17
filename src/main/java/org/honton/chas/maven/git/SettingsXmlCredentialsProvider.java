@@ -58,11 +58,23 @@ class SettingsXmlCredentialsProvider extends CredentialsProvider {
 
   protected String checkItem(Server server, CredentialItem credentialItem) {
     if (credentialItem instanceof CredentialItem.Username) {
-      ((CredentialItem.Username) credentialItem).setValue(server.getUsername());
+      String serverUsername = server.getUsername();
+      if(serverUsername != null) {
+        ((CredentialItem.Username) credentialItem).setValue(serverUsername);
+      }
+      else {
+        log.info("No username specified");
+      }
       return null;
     }
     if (credentialItem instanceof CredentialItem.Password) {
-      ((CredentialItem.Password) credentialItem).setValue(server.getPassword().toCharArray());
+      String serverPassword = server.getPassword();
+      if(serverPassword != null) {
+        ((CredentialItem.Password) credentialItem).setValue(serverPassword.toCharArray());
+      }
+      else {
+        log.info("No password specified");
+      }
       return null;
     }
     return "Cannot support credential type " + credentialItem.getClass().getCanonicalName();
