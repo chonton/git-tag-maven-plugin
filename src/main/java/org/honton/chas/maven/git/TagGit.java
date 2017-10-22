@@ -91,6 +91,7 @@ class TagGit {
     }
     if (!useUseDotSsh) {
       pushCommand.setTransportConfigCallback(new SettingsXmlConfigCallback(log, servers));
+      pushCommand.setCredentialsProvider(new SshCredentialsProvider(log, serverAccess));
     }
     else {
       pushCommand.setCredentialsProvider(new SettingsXmlCredentialsProvider(log, serverAccess));
