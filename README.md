@@ -16,9 +16,9 @@ instead of using ~/.m2/settings.xml, set the useDotSsh parameter to true.
 
 An alternate branch can be specified. An alternate remote repository can be specified.
 
-Mojo details at [plugin info](https://chonton.github.io/git-tag-maven-plugin/0.0.2/plugin-info.html).
+Mojo details at [plugin info](https://chonton.github.io/git-tag-maven-plugin/0.0.3/plugin-info.html).
 
-The [tag](https://chonton.github.io/git-tag-maven-plugin/0.0.2/tag-mojo.html) goal is by default
+The [tag](https://chonton.github.io/git-tag-maven-plugin/0.0.3/tag-mojo.html) goal is by default
 attached to the *deploy* phase.  This will occur after any packaging type's deploy plugin goal.
 
 The supported parameters are:
@@ -42,7 +42,7 @@ The supported parameters are:
       <plugin>
         <groupId>org.honton.chas</groupId>
         <artifactId>git-tag-maven-plugin</artifactId>
-        <version>0.0.2</version>
+        <version>0.0.3</version>
         <executions>
           <execution>
             <goals>
