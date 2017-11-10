@@ -10,12 +10,12 @@ import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.URIish;
 
 /**
- * Provide credentials from ~/.m2/settings.xml
+ * Provide username/password credentials from ~/.m2/settings.xml
  */
 @RequiredArgsConstructor
 class SettingsXmlCredentialsProvider extends CredentialsProvider {
   protected final Log log;
-  protected final Function<String,Server> servers;
+  protected final Function<String, Server> servers;
 
   @Override
   public final boolean isInteractive() {
@@ -59,20 +59,20 @@ class SettingsXmlCredentialsProvider extends CredentialsProvider {
   protected String checkItem(Server server, CredentialItem credentialItem) {
     if (credentialItem instanceof CredentialItem.Username) {
       String serverUsername = server.getUsername();
-      if(serverUsername != null) {
+      if (serverUsername != null) {
+        log.debug("Using username '" + serverUsername + "' for " + server.getId());
         ((CredentialItem.Username) credentialItem).setValue(serverUsername);
-      }
-      else {
+      } else {
         log.info("No username specified");
       }
       return null;
     }
     if (credentialItem instanceof CredentialItem.Password) {
       String serverPassword = server.getPassword();
-      if(serverPassword != null) {
+      if (serverPassword != null) {
+        log.debug("Using password for " + server.getId());
         ((CredentialItem.Password) credentialItem).setValue(serverPassword.toCharArray());
-      }
-      else {
+      } else {
         log.info("No password specified");
       }
       return null;

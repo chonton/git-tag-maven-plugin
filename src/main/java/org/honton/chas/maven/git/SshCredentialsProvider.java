@@ -4,13 +4,11 @@ import com.google.common.base.Function;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.settings.Server;
 import org.eclipse.jgit.transport.CredentialItem;
-import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.URIish;
 
 /**
- *
+ * Find ssh credentials in settings.xml - privateKey/[passphrase] entries are supported
  */
-
 class SshCredentialsProvider extends SettingsXmlCredentialsProvider {
 
   public SshCredentialsProvider(Log log, Function<String, Server> servers) {
@@ -18,8 +16,7 @@ class SshCredentialsProvider extends SettingsXmlCredentialsProvider {
   }
 
   protected boolean isSupported(CredentialItem credentialItem) {
-    return credentialItem instanceof CredentialItem.YesNoType
-      || super.isSupported(credentialItem);
+    return credentialItem instanceof CredentialItem.YesNoType || super.isSupported(credentialItem);
   }
 
   protected String checkItem(Server server, CredentialItem credentialItem) {
@@ -27,6 +24,7 @@ class SshCredentialsProvider extends SettingsXmlCredentialsProvider {
       log.debug(credentialItem.getPromptText());
       if (credentialItem.getPromptText().contains("RSA key fingerprint")) {
         ((CredentialItem.YesNoType) credentialItem).setValue(true);
+        log.debug("Returning 'yes' to fingerprint query");
         return null;
       }
       return "Cannot support credential with prompt " + credentialItem.getPromptText();
@@ -36,9 +34,10 @@ class SshCredentialsProvider extends SettingsXmlCredentialsProvider {
 
   protected String getId(URIish urIish) {
     int port = urIish.getPort();
-    if (port == 22) {
+    if (-1 != port && 22 != port) {
+      return urIish.getHost() + ':' + port;
+    } else {
       return urIish.getHost();
     }
-    return urIish.getHost() + ':' + port;
   }
 }

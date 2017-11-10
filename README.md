@@ -29,7 +29,7 @@ The supported parameters are:
 |tagName    | Yes      |git.tagName|         |Tag name     |
 |message    | No       |git.message|release ${tagName}|Tag message|
 |branch     | No       |git.branch|HEAD     |Tag at head of this branch|
-|remote     | No       |git.remote|origin   |Remote to push tag to|
+|remote     | No       |git.remote|origin   |Remote repository to push tag to|
 |useDotSsh  | No       |git.use.ssh|false   |Use the contents of ~/.ssh instead of ~/.m2/settings.xml to configure ssh connections|
 |skipPush   | No       |git.skipPush|false  |Skip pushing the tag to remote|
 

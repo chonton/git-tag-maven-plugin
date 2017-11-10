@@ -38,14 +38,15 @@ class TagGit {
   private File gitDir;
   private Log log;
   private List<Server> servers;
-  private Function<String,Server> serverAccess;
+  private Function<String, Server> serverAccess;
+  private String remoteUrl;
 
   public String createKey(File baseDir) throws IOException {
     gitDir = new FileRepositoryBuilder().findGitDir(baseDir).getGitDir();
     return gitDir.getCanonicalPath();
   }
 
-  public void tagAndPush(Log log, final List<Server> servers) throws IOException, GitAPIException {
+  public void tagAndPush(final Log log, final List<Server> servers) throws IOException, GitAPIException {
     this.log = log;
     this.servers = servers;
     serverAccess = new Function<String, Server>() {
@@ -60,6 +61,8 @@ class TagGit {
       }
     };
     try (Repository repository = new FileRepositoryBuilder().setGitDir(gitDir).build()) {
+      remoteUrl = repository.getConfig().getString("remote", remote, "url");
+      log.debug(remote + " url: " + remoteUrl);
       try (Git git = new Git(repository)) {
         tag(git);
         if (!skipPush) {
@@ -70,7 +73,7 @@ class TagGit {
   }
 
   private void tag(Git git) throws GitAPIException, IOException {
-    log.debug("tagging branch:"+branch+" tag:"+tagName);
+    log.debug("tagging branch:" + branch + " tag:" + tagName);
     TagCommand tagCommand = git.tag().setAnnotated(true);
     if (branch != null) {
       tagCommand.setObjectId(getObjectId(git));
@@ -86,21 +89,20 @@ class TagGit {
 
   private void push(Git git) throws GitAPIException {
     PushCommand pushCommand = git.push().setPushTags();
-    if (remote != null) {
-      pushCommand.setRemote(remote);
-    }
+    pushCommand.setRemote(remote);
+
     if (!useUseDotSsh) {
       pushCommand.setTransportConfigCallback(new SettingsXmlConfigCallback(log, servers));
       pushCommand.setCredentialsProvider(new SshCredentialsProvider(log, serverAccess));
-    }
-    else {
+    } else {
       pushCommand.setCredentialsProvider(new SettingsXmlCredentialsProvider(log, serverAccess));
     }
-    for(PushResult resp : pushCommand.call()) {
-      for(RemoteRefUpdate rru : resp.getRemoteUpdates()) {
+    for (PushResult resp : pushCommand.call()) {
+      for (RemoteRefUpdate rru : resp.getRemoteUpdates()) {
         Status status = rru.getStatus();
-        if(status != Status.OK && status != Status.UP_TO_DATE) {
-          throw new PatchApplyException("remote: " + rru.getRemoteName() + ", status: " + status);
+        if (status != Status.OK && status != Status.UP_TO_DATE) {
+          throw new PatchApplyException(
+            "remote url: " + remoteUrl + ", status: " + status + ", message: " + rru.getMessage());
         }
       }
     }

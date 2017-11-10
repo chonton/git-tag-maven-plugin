@@ -21,12 +21,12 @@ import org.apache.maven.settings.Settings;
 public class TagGitMojo extends AbstractMojo {
 
   private static final AtomicInteger READY_PROJECTS_COUNTER = new AtomicInteger();
-  private static final ConcurrentHashMap<String,TagGit> GIT_REPOSITORIES =  new ConcurrentHashMap();
+  private static final ConcurrentHashMap<String, TagGit> GIT_REPOSITORIES = new ConcurrentHashMap();
 
-  @Parameter( defaultValue = "${reactorProjects}", required = true, readonly = true )
+  @Parameter(defaultValue = "${reactorProjects}", required = true, readonly = true)
   private List<MavenProject> reactorProjects;
 
-  @Parameter( defaultValue = "${project}", readonly = true, required = true )
+  @Parameter(defaultValue = "${project}", readonly = true, required = true)
   private MavenProject project;
 
   @Parameter(defaultValue = "${settings}", readonly = true)
@@ -48,9 +48,9 @@ public class TagGitMojo extends AbstractMojo {
   private String branch;
 
   /**
-   * Git Remote URI
+   * Git Remote repository name
    */
-  @Parameter(property = "git.remote")
+  @Parameter(defaultValue = "origin", property = "git.remote")
   private String remote;
 
   /**
@@ -86,7 +86,7 @@ public class TagGitMojo extends AbstractMojo {
 
     try {
       addGitWorkspace(baseDir);
-      if ( READY_PROJECTS_COUNTER.incrementAndGet() == reactorProjects.size() ) {
+      if (READY_PROJECTS_COUNTER.incrementAndGet() == reactorProjects.size()) {
         iterateGitWorkspaces();
       }
     } catch (MojoExecutionException mee) {
@@ -99,15 +99,15 @@ public class TagGitMojo extends AbstractMojo {
   }
 
   private void addGitWorkspace(File baseDir) throws Exception {
-   TagGit value = new TagGit(branch, remote, tagName, message, skipPush, useUseDotSsh);
+    TagGit value = new TagGit(branch, remote, tagName, message, skipPush, useUseDotSsh);
     TagGit prior = GIT_REPOSITORIES.putIfAbsent(value.createKey(baseDir), value);
-    if(prior != null && !prior.equals(value)) {
+    if (prior != null && !prior.equals(value)) {
       throw new MojoExecutionException("mismatch in branch or remote");
     }
   }
 
   private void iterateGitWorkspaces() throws Exception {
-    for(TagGit entry : GIT_REPOSITORIES.values()) {
+    for (TagGit entry : GIT_REPOSITORIES.values()) {
       entry.tagAndPush(getLog(), settings.getServers());
     }
   }
