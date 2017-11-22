@@ -5,9 +5,11 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.settings.Server;
 import org.eclipse.jgit.api.Git;
@@ -25,28 +27,28 @@ import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.eclipse.jgit.transport.RemoteRefUpdate.Status;
 
 @RequiredArgsConstructor
-@EqualsAndHashCode(exclude = {"gitDir", "log", "servers"})
 class TagGit {
 
-  final private String branch;
-  final private String remote;
-  final private String tagName;
-  final private String message;
-  final private boolean skipPush;
-  final private boolean useUseDotSsh;
+  @Value
+  @EqualsAndHashCode
+  static class Configuration implements Serializable {
+    File gitDir;
+    String branch;
+    String remote;
+    String tagName;
+    String message;
+    boolean skipPush;
+    boolean useUseDotSsh;
+  }
 
-  private File gitDir;
+  final private Configuration cfg;
   private Log log;
   private List<Server> servers;
   private Function<String, Server> serverAccess;
   private String remoteUrl;
 
-  public String createKey(File baseDir) throws IOException {
-    gitDir = new FileRepositoryBuilder().findGitDir(baseDir).getGitDir();
-    return gitDir.getCanonicalPath();
-  }
-
-  public void tagAndPush(final Log log, final List<Server> servers) throws IOException, GitAPIException {
+  public void tagAndPush(final Log log, final List<Server> servers)
+    throws IOException, GitAPIException {
     this.log = log;
     this.servers = servers;
     serverAccess = new Function<String, Server>() {
@@ -60,12 +62,12 @@ class TagGit {
         }, null);
       }
     };
-    try (Repository repository = new FileRepositoryBuilder().setGitDir(gitDir).build()) {
-      remoteUrl = repository.getConfig().getString("remote", remote, "url");
-      log.debug(remote + " url: " + remoteUrl);
+    try (Repository repository = new FileRepositoryBuilder().setGitDir(cfg.getGitDir()).build()) {
+      remoteUrl = repository.getConfig().getString("remote", cfg.getRemote(), "url");
+      log.debug(cfg.getRemote() + " url: " + remoteUrl);
       try (Git git = new Git(repository)) {
         tag(git);
-        if (!skipPush) {
+        if (!cfg.isSkipPush()) {
           push(git);
         }
       }
@@ -73,25 +75,27 @@ class TagGit {
   }
 
   private void tag(Git git) throws GitAPIException, IOException {
-    log.debug("tagging branch:" + branch + " tag:" + tagName);
+    log.debug("tagging branch:" + cfg.getBranch() + " tag:" + cfg.getTagName());
     TagCommand tagCommand = git.tag().setAnnotated(true);
-    if (branch != null) {
+    if (cfg.getBranch() != null) {
       tagCommand.setObjectId(getObjectId(git));
     }
-    tagCommand.setName(tagName).setMessage(message == null ? "release " + tagName : message).call();
+    tagCommand.setName(cfg.getTagName())
+      .setMessage(cfg.getMessage() == null ? "release " + cfg.getTagName() : cfg.getMessage())
+      .call();
   }
 
   private RevObject getObjectId(Git git) throws IOException {
     Repository repository = git.getRepository();
-    ObjectId objectId = repository.findRef(branch).getObjectId();
+    ObjectId objectId = repository.findRef(cfg.getBranch()).getObjectId();
     return new RevWalk(repository).parseAny(objectId);
   }
 
   private void push(Git git) throws GitAPIException {
     PushCommand pushCommand = git.push().setPushTags();
-    pushCommand.setRemote(remote);
+    pushCommand.setRemote(cfg.getRemote());
 
-    if (!useUseDotSsh) {
+    if (!cfg.isUseUseDotSsh()) {
       pushCommand.setTransportConfigCallback(new SettingsXmlConfigCallback(log, servers));
       pushCommand.setCredentialsProvider(new SshCredentialsProvider(log, serverAccess));
     } else {

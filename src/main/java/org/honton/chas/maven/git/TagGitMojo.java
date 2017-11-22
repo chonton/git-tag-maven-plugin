@@ -1,9 +1,12 @@
 package org.honton.chas.maven.git;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ConcurrentMap;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -12,6 +15,8 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.settings.Settings;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.honton.chas.maven.git.TagGit.Configuration;
 
 /**
  * Tag current code with a tagName and message.  Optionally use a branch other than HEAD.
@@ -20,14 +25,14 @@ import org.apache.maven.settings.Settings;
 @Mojo(name = "tag", defaultPhase = LifecyclePhase.DEPLOY)
 public class TagGitMojo extends AbstractMojo {
 
-  private static final AtomicInteger READY_PROJECTS_COUNTER = new AtomicInteger();
-  private static final ConcurrentHashMap<String, TagGit> GIT_REPOSITORIES = new ConcurrentHashMap();
-
   @Parameter(defaultValue = "${reactorProjects}", required = true, readonly = true)
   private List<MavenProject> reactorProjects;
 
   @Parameter(defaultValue = "${project}", readonly = true, required = true)
   private MavenProject project;
+
+  @Parameter(defaultValue = "${session}", readonly = true, required = true)
+  private MavenSession session;
 
   @Parameter(defaultValue = "${settings}", readonly = true)
   protected Settings settings;
@@ -79,15 +84,13 @@ public class TagGitMojo extends AbstractMojo {
   protected boolean useUseDotSsh;
 
   public void execute() throws MojoExecutionException, MojoFailureException {
-    if (skip) {
-      getLog().info("skipping git execution");
-      return;
-    }
-
     try {
-      addGitWorkspace(baseDir);
-      if (READY_PROJECTS_COUNTER.incrementAndGet() == reactorProjects.size()) {
-        iterateGitWorkspaces();
+      List<Object> queue = getTagQueue();
+      synchronized (queue) {
+        queue.add(createCfg());
+        if (queue.size() == reactorProjects.size()) {
+          dequeueGitWorkspaces(queue);
+        }
       }
     } catch (MojoExecutionException mee) {
       throw mee;
@@ -98,17 +101,52 @@ public class TagGitMojo extends AbstractMojo {
     }
   }
 
-  private void addGitWorkspace(File baseDir) throws Exception {
-    TagGit value = new TagGit(branch, remote, tagName, message, skipPush, useUseDotSsh);
-    TagGit prior = GIT_REPOSITORIES.putIfAbsent(value.createKey(baseDir), value);
-    if (prior != null && !prior.equals(value)) {
-      throw new MojoExecutionException("mismatch in branch or remote");
+  private List<Object> getTagQueue() {
+    Properties projectProperties = session.getUserProperties();
+
+    // Plugin instances may be in different Classworlds if they are loaded in different modules
+    // containing different extensions.  The plugin cannot rely on static variables, only injected
+    // or session shared variables
+    synchronized (projectProperties) {
+      String propertyKey = getClass().getCanonicalName();
+      List<Object> reqs = (List) projectProperties.get(propertyKey);
+      if (reqs == null) {
+        reqs = new ArrayList<>(reactorProjects.size());
+        projectProperties.put(propertyKey, reqs);
+      }
+      return reqs;
     }
   }
 
-  private void iterateGitWorkspaces() throws Exception {
-    for (TagGit entry : GIT_REPOSITORIES.values()) {
-      entry.tagAndPush(getLog(), settings.getServers());
+  private TagGit.Configuration createCfg() {
+    if (skip) {
+      getLog().info("skipping git-tag execution");
+      return null;
+    } else {
+      File gitDir = new FileRepositoryBuilder().findGitDir(baseDir).getGitDir();
+      return new TagGit.Configuration(gitDir, branch, remote, tagName, message, skipPush,
+        useUseDotSsh);
+    }
+  }
+
+  public void dequeueGitWorkspaces(List<Object> queue) throws Exception {
+    ConcurrentMap<String, TagGit.Configuration> work = new ConcurrentHashMap<>();
+    for (Object q : queue) {
+      if (q == null) {
+        continue;
+      }
+
+      TagGit.Configuration cfg = CastHelper.cast(TagGit.Configuration.class, q);
+      String key = cfg.getGitDir().getCanonicalPath();
+      Configuration prior = work.putIfAbsent(key, cfg);
+      if (prior != null && prior.equals(cfg)) {
+        getLog().warn("Configurations for " + key + " are not consistent within reactor");
+      }
+    }
+
+    for (TagGit.Configuration entry : work.values()) {
+      TagGit tagGit = new TagGit(entry);
+      tagGit.tagAndPush(getLog(), settings.getServers());
     }
   }
 }
