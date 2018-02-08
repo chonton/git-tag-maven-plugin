@@ -92,11 +92,8 @@ public class TagGitMojo extends AbstractMojo {
           dequeueGitWorkspaces(queue);
         }
       }
-    } catch (MojoExecutionException mee) {
-      throw mee;
-    } catch (MojoFailureException mfe) {
-      throw mfe;
     } catch (Exception e) {
+      getLog().error(e);
       throw new MojoExecutionException(e.getMessage(), e);
     }
   }
@@ -124,8 +121,7 @@ public class TagGitMojo extends AbstractMojo {
       return null;
     } else {
       File gitDir = new FileRepositoryBuilder().findGitDir(baseDir).getGitDir();
-      return new TagGit.Configuration(gitDir, branch, remote, tagName, message, skipPush,
-        useUseDotSsh);
+      return new TagGit.Configuration(gitDir, branch, remote, tagName, message, skipPush, useUseDotSsh);
     }
   }
 

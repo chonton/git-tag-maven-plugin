@@ -75,13 +75,16 @@ class TagGit {
   }
 
   private void tag(Git git) throws GitAPIException, IOException {
-    log.debug("tagging branch:" + cfg.getBranch() + " tag:" + cfg.getTagName());
     TagCommand tagCommand = git.tag().setAnnotated(true);
     if (cfg.getBranch() != null) {
+      log.info("branch: " + cfg.getBranch() );
       tagCommand.setObjectId(getObjectId(git));
     }
+    String message = cfg.getMessage() == null ? "release " + cfg.getTagName() : cfg.getMessage();
+    log.info("tag name: " + cfg.getTagName() + ", message: " + message);
+
     tagCommand.setName(cfg.getTagName())
-      .setMessage(cfg.getMessage() == null ? "release " + cfg.getTagName() : cfg.getMessage())
+      .setMessage(message)
       .call();
   }
 
@@ -93,6 +96,8 @@ class TagGit {
 
   private void push(Git git) throws GitAPIException {
     PushCommand pushCommand = git.push().setPushTags();
+
+    log.info("pushing tag to " + cfg.getRemote());
     pushCommand.setRemote(cfg.getRemote());
 
     if (!cfg.isUseUseDotSsh()) {
