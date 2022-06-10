@@ -23,15 +23,16 @@ attached to the *deploy* phase.  This will occur after any packaging type's depl
 
 The supported parameters are:
 
-| Parameter | Required | Property | Default | Description |
-|-----------|----------|----------|---------|-------------|
-|skip       | No       |git.skip  |false    |Skip executing the plugin |
-|tagName    | Yes      |git.tagName|         |Tag name     |
-|message    | No       |git.message|release ${tagName}|Tag message|
-|branch     | No       |git.branch|HEAD     |Tag at head of this branch|
-|remote     | No       |git.remote|origin   |Remote repository to push tag to|
-|useDotSsh  | No       |git.use.ssh|false   |Use the contents of ~/.ssh instead of ~/.m2/settings.xml to configure ssh connections|
-|skipPush   | No       |git.skipPush|false  |Skip pushing the tag to remote|
+|   Parameter    | Required |    Property     | Default | Description |
+|----------------|----------|-----------------|---------|-------------|
+|skip            | No       |git.skip         |false    |Skip executing the plugin |
+|tagName         | Yes      |git.tagName      |         |Tag name     |
+|message         | No       |git.message      |release ${tagName}|Tag message|
+|branch          | No       |git.branch       |HEAD     |Tag at head of this branch|
+|remote          | No       |git.remote       |origin   |Remote repository to push tag to|
+|useDotSsh       | No       |git.use.ssh      |false    |Use the contents of ~/.ssh instead of ~/.m2/settings.xml to configure ssh connections|
+|skipPush        | No       |git.skipPush     |false    |Skip pushing the tag to remote|
+|skipSnapshots   | No       |git.skipSnapshots|true     |Skip creating tag for snapshots|
 
 ### Typical attached phase use:
 
@@ -42,7 +43,7 @@ The supported parameters are:
       <plugin>
         <groupId>org.honton.chas</groupId>
         <artifactId>git-tag-maven-plugin</artifactId>
-        <version>0.0.3</version>
+        <version>0.0.4-SNAPSHOT</version>
         <executions>
           <execution>
             <goals>

@@ -77,6 +77,12 @@ public class TagGitMojo extends AbstractMojo {
   private boolean skipPush;
 
   /**
+   * Skip creating tag for SNAPSHOTs.
+   */
+  @Parameter(defaultValue = "true", property = "git.skipSnapshots")
+  private boolean skipSnapshots;
+
+  /**
    * Use the contents of the ~/.ssh directory instead of ~/.m2/settings.xml to configure ssh
    * connections.
    */
@@ -121,7 +127,7 @@ public class TagGitMojo extends AbstractMojo {
       return null;
     } else {
       File gitDir = new FileRepositoryBuilder().findGitDir(baseDir).getGitDir();
-      return new TagGit.Configuration(gitDir, branch, remote, tagName, message, skipPush, useUseDotSsh);
+      return new TagGit.Configuration(gitDir, branch, remote, tagName, message, skipPush, skipSnapshots, useUseDotSsh);
     }
   }
 
