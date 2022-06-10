@@ -38,6 +38,7 @@ class TagGit {
     String tagName;
     String message;
     boolean skipPush;
+    boolean skipSnapshots;
     boolean useUseDotSsh;
   }
 
@@ -51,6 +52,12 @@ class TagGit {
     throws IOException, GitAPIException {
     this.log = log;
     this.servers = servers;
+
+    if (cfg.getTagName().endsWith("SNAPSHOT") && cfg.isSkipSnapshots()) {
+        log.info("Tagname '" + cfg.getTagName() + "' is recognized as SNAPSHOT and skipSnapshots is set to true. Tagging not evaluated");
+        return;
+    }
+
     serverAccess = new Function<String, Server>() {
       @Override
       public Server apply(final String id) {
