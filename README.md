@@ -8,27 +8,27 @@ The credentials used to authenticate to the remote repository are extracted from
 particular server credentials are selected by matching the host portion of the git url with a server
 id.
 
-| URL                                                           | ServerId   | 
+| URL                                                           | ServerId   |
 |---------------------------------------------------------------|------------|
-| git@github.com:chonton/git-tag-maven-plugin.git               | github.com |
+| git&NoBreak;@github.com:chonton/git-tag-maven-plugin.git      | github.com |
 | https&NoBreak;://github.com/chonton/git-tag-maven-plugin.git  | github.com |
 
 The credentials parameters must correlate with the provided url.
 
-| URL                                             | Required Credential Parameter(s)  | 
-|-------------------------------------------------|-----------------------------------|
-| git@github.com:chonton/git-tag-maven-plugin.git | &lt;username> &amp; &lt;password> |
-| ssh git url                                     | &lt;privateKey>                   |
+| URL                                                       | Required Credential Parameter(s)  |
+|-----------------------------------------------------------|-----------------------------------|
+| git&NoBreak;@github.com:chonton/git-tag-maven-plugin.git  | &lt;username> &amp; &lt;password> |
+| ssh git url                                               | &lt;privateKey>                   |
 
 If an ssh git url is provided and you want to use standard ssh configuration from the ~/.ssh
 directory instead of using ~/.m2/settings.xml, set the useDotSsh parameter to true.
 
 An alternate branch can be specified. An alternate remote repository can also be specified.
 
-Mojo details at [plugin info](https://chonton.github.io/git-tag-maven-plugin/0.0.3/plugin-info.html)
+Mojo details at [plugin info](https://chonton.github.io/git-tag-maven-plugin/plugin-info.html)
 .
 
-The [tag](https://chonton.github.io/git-tag-maven-plugin/0.0.3/tag-mojo.html) goal is by default
+The [tag](https://chonton.github.io/git-tag-maven-plugin/tag-mojo.html) goal is by default
 attached to the *deploy* phase. This will occur after any packaging type's deploy plugin goal.
 
 The supported parameters are:
@@ -53,7 +53,7 @@ The supported parameters are:
       <plugin>
         <groupId>org.honton.chas</groupId>
         <artifactId>git-tag-maven-plugin</artifactId>
-        <version>0.0.4-SNAPSHOT</version>
+        <version>0.0.4</version>
         <executions>
           <execution>
             <goals>
