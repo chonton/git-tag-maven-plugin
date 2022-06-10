@@ -8,15 +8,13 @@ import lombok.RequiredArgsConstructor;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.settings.Server;
 import org.eclipse.jgit.api.TransportConfigCallback;
-import org.eclipse.jgit.transport.JschConfigSessionFactory;
-import org.eclipse.jgit.transport.OpenSshConfig;
 import org.eclipse.jgit.transport.SshTransport;
 import org.eclipse.jgit.transport.Transport;
+import org.eclipse.jgit.transport.ssh.jsch.JschConfigSessionFactory;
+import org.eclipse.jgit.transport.ssh.jsch.OpenSshConfig;
 import org.eclipse.jgit.util.FS;
 
-/**
- * Callback to create appropriate session factory based upons contents of ~/.m2/settings.xml
- */
+/** Callback to create appropriate session factory based upons contents of ~/.m2/settings.xml */
 @RequiredArgsConstructor
 class SettingsXmlConfigCallback implements TransportConfigCallback {
   private final Log log;
@@ -34,8 +32,8 @@ class SettingsXmlConfigCallback implements TransportConfigCallback {
    */
   class SettingsXmlFactory extends JschConfigSessionFactory {
     @Override
-    protected Session createSession(OpenSshConfig.Host hc, String user, String host, int port, FS fs) throws
-      JSchException {
+    protected Session createSession(
+        OpenSshConfig.Host hc, String user, String host, int port, FS fs) throws JSchException {
       JSch jSch = new JSch();
       for (Server server : servers) {
         String privateKey = server.getPrivateKey();
@@ -48,7 +46,6 @@ class SettingsXmlConfigCallback implements TransportConfigCallback {
     }
 
     @Override
-    protected void configure(OpenSshConfig.Host hc, Session session) {
-    }
+    protected void configure(OpenSshConfig.Host hc, Session session) {}
   }
 }
