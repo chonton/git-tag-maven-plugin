@@ -7,6 +7,8 @@
   <version>0.0.4</version>
   <packaging>maven-plugin</packaging>
 
+  <name>Git Tag Maven Plugin</name>
+
   <description>Tag the current git working tree</description>
   <url>https://github.com/chonton/${project.artifactId}</url>
   <inceptionYear>2017</inceptionYear>
@@ -122,25 +124,21 @@
     <plugins>
 
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.10.1</version>
       </plugin>
 
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-install-plugin</artifactId>
         <version>3.0.0-M1</version>
       </plugin>
 
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <version>3.2.2</version>
       </plugin>
 
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-plugin-plugin</artifactId>
         <version>3.6.4</version>
         <configuration>
@@ -230,7 +228,6 @@
         <plugins>
 
           <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>
             <version>3.0.1</version>
             <executions>
@@ -245,7 +242,6 @@
           </plugin>
 
           <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
             <version>3.4.0</version>
             <executions>
@@ -259,7 +255,6 @@
           </plugin>
 
           <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-source-plugin</artifactId>
             <version>3.2.1</version>
             <executions>
