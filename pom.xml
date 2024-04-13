@@ -55,7 +55,7 @@
   </distributionManagement>
 
   <properties>
-    <jgit.version>6.1.0.202203080745-r</jgit.version>
+    <jgit.version>6.6.1.202309021850-r</jgit.version>
     <maven.compiler.source>9</maven.compiler.source>
     <maven.compiler.target>9</maven.compiler.target>
     <!-- use org.sonatype.plugins:nexus-staging-maven-plugin instead of org.apache.maven.plugins:maven-deploy-plugin -->
